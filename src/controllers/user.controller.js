@@ -4,6 +4,17 @@ import {ApiError} from "../utils/ApiError.js";
 import {ApiResponse} from "../utils/ApiResponse.js";
 import {asyncHandler} from "../utils/asyncHandler.js";
 
+//create a metod for genrating access and rerresh tokens
+const generateAccessAndRefreshTokens = async (userId) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+  const accessToken = user.generateAccessToken();
+  const refreshToken = user.generateRefreshToken();
+  return { accessToken, refreshToken };
+};
+
 const registerUser = asyncHandler( async (req, res)=>{
   const {username, email, password} = req.body || {}
   
@@ -55,15 +66,15 @@ const loginUser = asyncHandler(async (req, res)=>{
   }
   
   const accessToken = await jwt.sign(
-    {userId: user?._id},
-    process.env.JWT_SECRET,
-    {expiresIn: process.env.JWT_EXPIRES_IN}
+    {_id: user?._id},
+    process.env.ACCESS_TOKEN_SECRET,
+    {expiresIn: process.env.ACCESS_TOKEN_EXPIRY}
   );
   
   const refreshToken = await jwt.sign(
-    {userId: user?._id},
-    process.env.JWT_REFRESH_SECRET,
-    {expiresIn: process.env.JWT_REFRESH_EXPIRES_IN}
+    {_id: user?._id},
+    process.env.REFRESH_TOKEN_SECRET,
+    {expiresIn: process.env.REFRESH_TOKEN_EXPIRY}
   );
   
   user.refreshToken = refreshToken
@@ -80,8 +91,110 @@ const loginUser = asyncHandler(async (req, res)=>{
   .status(200)
   .cookie("refreshToken", refreshToken, cookiesOptions)
   .cookie("accessToken", accessToken, cookiesOptions)
-  .json(new ApiResponse(200, "User logged In", {user}))
-  
+  .json(new ApiResponse(200, "User logged In", {
+    user, 
+    accessToken, 
+    refreshToken
+  }))
 })
 
-export {registerUser, loginUser}
+const userProfile = asyncHandler(async (req, res)=>{
+  const user = req.user
+  
+  return res
+  .status(200)
+  .json(new ApiResponse(200, "User profile fetched successfully", user))
+})
+
+//refresh accessToken
+const refreshAccessToken = asyncHandler(async (req, res) =>{
+  let incomingRefreshedToken;
+  try {
+    incomingRefreshedToken = req.cookies.refreshToken || req.body.refreshToken;
+    if (!incomingRefreshedToken) {
+      throw new ApiError(401, "Refresh Token missing!!!");
+    }
+  } catch (err) {
+    throw new ApiError(401, "User not found or token expired!!, login again", {
+      err,
+    });
+  }
+
+  let decodedRefreshedToken;
+  try {
+    decodedRefreshedToken = await jwt.verify(
+      incomingRefreshedToken,
+      process.env.REFRESH_TOKEN_SECRET
+    );
+  } catch (error) {
+    throw new ApiError(401, "Invalid refresh tokens!!!", { error });
+  }
+
+  //fetch data from db using decodedRefreshedToken
+  const user = await User.findById(decodedRefreshedToken?._id).select("+refreshToken");
+  //check refresh Tokens
+  if (!user || !user.refreshToken.includes(incomingRefreshedToken)) {
+    throw new ApiError(401, "Token reuse detected");
+  }
+
+  //generate new refresh Token
+  const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
+    user._id
+  );
+
+  // add new refresh token
+  user.refreshToken = user.refreshToken.filter(
+    (token) => token !== incomingRefreshedToken
+  );
+  user.refreshToken.push(refreshToken);
+
+  // save once
+  await user.save({ validateBeforeSave: false });
+
+  //cookies options
+  const newCookiesOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+  };
+
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, newCookiesOptions)
+    .cookie("refreshToken", refreshToken, newCookiesOptions)
+    .json(
+      new ApiResponse(200, `Tokens refreshed successfully`, {
+        accessToken,
+        refreshToken,
+      })
+    );
+});
+
+const logoutUser = asyncHandler(async (req, res)=>{
+  const existingToken = req.cookies?.refreshToken || req.body?.refreshToken
+  if(!existingToken){
+    throw new ApiError(401, "Token expired")
+  }
+  
+  const user = await User.findOne({refreshToken: { $in: [existingToken]}}).select("+refreshToken")
+  //wipe out current s3ssion only
+  user.refreshToken = user.refreshToken.filter(
+    token => token !== existingToken
+  );
+  await user.save({validateBeforeSave: false})
+  
+  const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+  };
+
+  return res
+    .clearCookie("accessToken", cookieOptions)
+    .clearCookie("refreshToken", cookieOptions)
+    .status(200)
+    .json(new ApiResponse(200, "Logged out successfully")
+    );
+  
+})
+export {registerUser, loginUser, userProfile, refreshAccessToken, logoutUser}

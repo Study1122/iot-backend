@@ -1,5 +1,6 @@
 import mongoose, {Schema} from "mongoose";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 const userSchema = new Schema(
   {
@@ -26,10 +27,10 @@ const userSchema = new Schema(
       type: String, 
       select: false 
     },
-    refreshToken: { 
+    refreshToken: [{ 
       type: String, 
       select: false 
-    },
+    }],
   },{timestamps: true}
 );
 
@@ -50,6 +51,22 @@ userSchema.set("toJSON", {
     return ret;
   },
 });
+
+userSchema.methods.generateAccessToken = function () {
+  return jwt.sign(
+    { _id: this._id },
+    process.env.ACCESS_TOKEN_SECRET,
+    { expiresIn: process.env.ACCESS_TOKEN_EXPIRY }
+  );
+};
+
+userSchema.methods.generateRefreshToken = function () {
+  return jwt.sign(
+    { _id: this._id },
+    process.env.REFRESH_TOKEN_SECRET,
+    { expiresIn: process.env.REFRESH_TOKEN_EXPIRY }
+  );
+};
 
 //🧠 password validating during login
 

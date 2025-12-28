@@ -30,11 +30,15 @@ app.use(cookieParser());
 app.use(express.static("public"));
 
 import userRouter from "./routes/user.routes.js";
+import deviceRoutes from "./routes/device.routes.js";
+import telemetryRoutes from "./routes/telemetry.routes.js";
 
 app.get("/", (req,res)=>{
   res.send("server is online!!!");
 })
 
 app.use("/api/v1/users", userRouter)
+app.use("/api/v1/devices", deviceRoutes);
+app.use("/api/v1/telemetry", telemetryRoutes);
 
 export {app}
