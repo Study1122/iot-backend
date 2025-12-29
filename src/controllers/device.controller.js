@@ -47,7 +47,7 @@ const getUserDevices = asyncHandler(async (req, res) => {
   }
 
   const devices = await Device.find({ owner: userId }).select("+deviceSecret");
-  
+  console.log(devices)
   const now = Date.now();
 
   const result = devices.map(device => ({
@@ -57,7 +57,7 @@ const getUserDevices = asyncHandler(async (req, res) => {
   }));
 
   res.status(200).json(
-    new ApiResponse(200, "Devices fetched successfully", devices)
+    new ApiResponse(200, "Devices fetched successfully", result)
   );
 });
 

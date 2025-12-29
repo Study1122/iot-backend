@@ -13,7 +13,7 @@ router.get("/test", (req, res) => res.send("Router works!"));
 // 🔐 user must be logged in
 router.post("/register", authMiddleware, registerDevice);
 //Fetch all devices belonging to a user.
-router.get("/user/:userId/devices", authMiddleware, getUserDevices);
+router.get("/devices/user/:userId/devices", authMiddleware, getUserDevices);
 //get status of all devices
 router.get("/device/:deviceId/status", authMiddleware, getDeviceStatus);
 //Telemetry history

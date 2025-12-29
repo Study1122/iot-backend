@@ -53,7 +53,11 @@ const loginUser = asyncHandler(async (req, res)=>{
   if(!username|| !password){
     throw new ApiError(300, "All fields required!!")
   }
-  
+  ////////////frontend check
+  console.log("HEADERS:", req.headers["content-type"]);
+  console.log("ORIGIN:", req.headers.origin);
+  console.log("BODY:", req.body);
+  ////////////
   const user = await User.findOne({username}).select("+password +refreshToken")
   
   if(!user){
@@ -64,7 +68,8 @@ const loginUser = asyncHandler(async (req, res)=>{
   if(!isMatch){
     throw new ApiError(400, "Invalid  credentials!!!");
   }
-  
+  const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id)
+  /*
   const accessToken = await jwt.sign(
     {_id: user?._id},
     process.env.ACCESS_TOKEN_SECRET,
@@ -76,7 +81,7 @@ const loginUser = asyncHandler(async (req, res)=>{
     process.env.REFRESH_TOKEN_SECRET,
     {expiresIn: process.env.REFRESH_TOKEN_EXPIRY}
   );
-  
+  */
   user.refreshToken = refreshToken
   await user.save()
   
@@ -91,11 +96,9 @@ const loginUser = asyncHandler(async (req, res)=>{
   .status(200)
   .cookie("refreshToken", refreshToken, cookiesOptions)
   .cookie("accessToken", accessToken, cookiesOptions)
-  .json(new ApiResponse(200, "User logged In", {
-    user, 
-    accessToken, 
-    refreshToken
-  }))
+  .json(new ApiResponse(200, "User logged In",
+  { accessToken, user }
+  ))
 })
 
 const userProfile = asyncHandler(async (req, res)=>{
@@ -177,10 +180,10 @@ const logoutUser = asyncHandler(async (req, res)=>{
   }
   
   const user = await User.findOne({refreshToken: { $in: [existingToken]}}).select("+refreshToken")
-  //wipe out current s3ssion only
-  user.refreshToken = user.refreshToken.filter(
+  //wipe out current session only
+  user.refreshToken = (user.refreshToken.filter(
     token => token !== existingToken
-  );
+  ));
   await user.save({validateBeforeSave: false})
   
   const cookieOptions = {
