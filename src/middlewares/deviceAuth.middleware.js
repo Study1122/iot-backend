@@ -1,5 +1,6 @@
 import { Device } from "../models/device.model.js";
 import { ApiError } from "../utils/ApiError.js";
+import bcrypt from "bcryptjs";
 
 const verifyDevice = async (req, res, next) => {
   try {
@@ -19,7 +20,11 @@ const verifyDevice = async (req, res, next) => {
     }
 
     // Compare secret
-    if (device.deviceSecret !== deviceSecret) {
+    //if (device.deviceSecret !== deviceSecret) {
+    // throw new ApiError(401, "Invalid device credentials");
+    //}
+    
+    if (!device || !(await bcrypt.compare(deviceSecret, device.deviceSecret))) {
       throw new ApiError(401, "Invalid device credentials");
     }
 

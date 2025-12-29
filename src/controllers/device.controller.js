@@ -3,6 +3,7 @@ import { Device } from "../models/device.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { isDeviceOnline } from "../utils/deviceStatus.js";
 
 const registerDevice = asyncHandler(async (req, res) => {
   const { deviceName, deviceId } = req.body;
@@ -45,7 +46,7 @@ const getUserDevices = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid user ID");
   }
 
-  const devices = await Device.find({ owner: userId });
+  const devices = await Device.find({ owner: userId }).select("+deviceSecret");
   
   const now = Date.now();
 
@@ -60,6 +61,7 @@ const getUserDevices = asyncHandler(async (req, res) => {
   );
 });
 
+// devices status
 const getDeviceStatus = asyncHandler(async (req, res) => {
   const { deviceId } = req.params;
 
@@ -67,7 +69,14 @@ const getDeviceStatus = asyncHandler(async (req, res) => {
   if (!device) {
     throw new ApiError(404, "Device not found");
   }
-
+  
+  const online = isDeviceOnline(device);
+  // optional: keep DB in sync
+  if (device.isOnline !== online) {
+    device.isOnline = online;
+    await device.save();
+  }
+  
   // 🔐 ownership check (VERY IMPORTANT)
   if (device.owner.toString() !== req.user._id.toString()) {
     throw new ApiError(403, "Unauthorized access to this device");
@@ -87,6 +96,7 @@ const heartbeat = asyncHandler(async (req, res) => {
   const device = req.device;
 
   device.lastSeen = new Date();
+  device.isOnline = true;
   await device.save({ validateBeforeSave: false });
 
   return res.status(200).json(
@@ -95,3 +105,4 @@ const heartbeat = asyncHandler(async (req, res) => {
 });
 
 export {registerDevice, getUserDevices, getDeviceStatus, heartbeat};
+
