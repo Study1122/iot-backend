@@ -1,7 +1,7 @@
 import { Device } from "../models/device.model.js";
 import { ApiError } from "../utils/ApiError.js";
 
-export const verifyDevice = async (req, res, next) => {
+const verifyDevice = async (req, res, next) => {
   try {
     const deviceId = req.headers["x-device-id"];
     const deviceSecret = req.headers["x-device-secret"];
@@ -30,3 +30,5 @@ export const verifyDevice = async (req, res, next) => {
     next(err);
   }
 };
+
+export { verifyDevice }

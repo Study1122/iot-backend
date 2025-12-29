@@ -1,8 +1,8 @@
+import mongoose from "mongoose";
 import { Device } from "../models/device.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-
 
 const registerDevice = asyncHandler(async (req, res) => {
   const { deviceName, deviceId } = req.body;
@@ -36,4 +36,45 @@ const registerDevice = asyncHandler(async (req, res) => {
   );
 });
 
-export {registerDevice};
+
+//Fetch all devices belonging to a user.
+const getUserDevices = asyncHandler(async (req, res) => {
+  const { userId } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(userId)) {
+    throw new ApiError(400, "Invalid user ID");
+  }
+
+  const devices = await Device.find({ owner: userId });
+  
+  const now = Date.now();
+
+  const result = devices.map(device => ({
+    ...device.toObject(),
+    isOnline:
+      device.lastSeen && (now - device.lastSeen.getTime()) < 60 * 1000
+  }));
+
+  res.status(200).json(
+    new ApiResponse(200, "Devices fetched successfully", devices)
+  );
+});
+
+const getDeviceStatus = asyncHandler(async (req, res) => {
+  const { deviceId } = req.params;
+
+  const device = await Device.findOne({ deviceId });
+  if (!device) {
+    throw new ApiError(404, "Device not found");
+  }
+
+  const now = new Date();
+  const isOnline = device.lastSeen && (now - device.lastSeen) < 60 * 1000; // 1 min
+
+  res.status(200).json(
+    new ApiResponse(200, "Device status fetched", { online: isOnline })
+  );
+});
+
+
+export {registerDevice, getUserDevices, getDeviceStatus};

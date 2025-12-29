@@ -1,44 +1,38 @@
-import mongoose, {Schema} from "mongoose";
+import mongoose from "mongoose";
 import crypto from "crypto";
 
-const deviceSchema = new Schema(
+const deviceSchema = new mongoose.Schema(
   {
-    deviceName:{
+    deviceName: {
       type: String,
       required: true,
-      lowercase:true,
-      trim:true,
+      trim: true,
     },
-    deviceId:{
+    deviceId: {
       type: String,
       required: true,
-      lowercase:true,
-      unique:true,
-      trim:true,
+      unique: true,
     },
-    
     deviceSecret: {
       type: String,
-      select: false, // 🔐 never return by default
+      required: true,
+      select: false
     },
-    
-    owner:{
-      type: Schema.Types.ObjectId,
-      ref:"User",
-      required: true
+    owner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
-    isOnline:{
-      type: Boolean,
-      default: false
+    lastSeen: {
+      type: Date,
     },
-    lastSeen: Date,
   },
-  {timestamps: true}
+  { timestamps: true }
 );
 
+// 🔑 generate secret
 deviceSchema.methods.generateDeviceSecret = function () {
   return crypto.randomBytes(32).toString("hex");
 };
-
 
 export const Device = mongoose.model("Device", deviceSchema);
