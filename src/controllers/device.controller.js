@@ -68,6 +68,11 @@ const getDeviceStatus = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Device not found");
   }
 
+  // 🔐 ownership check (VERY IMPORTANT)
+  if (device.owner.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "Unauthorized access to this device");
+  }
+  
   const now = new Date();
   const isOnline = device.lastSeen && (now - device.lastSeen) < 60 * 1000; // 1 min
 
@@ -76,5 +81,17 @@ const getDeviceStatus = asyncHandler(async (req, res) => {
   );
 });
 
+//heartbeat of IOT  endpoint
+const heartbeat = asyncHandler(async (req, res) => {
+  // device is already attached by verifyDevice middleware
+  const device = req.device;
 
-export {registerDevice, getUserDevices, getDeviceStatus};
+  device.lastSeen = new Date();
+  await device.save({ validateBeforeSave: false });
+
+  return res.status(200).json(
+    new ApiResponse(200, "Heartbeat received")
+  );
+});
+
+export {registerDevice, getUserDevices, getDeviceStatus, heartbeat};

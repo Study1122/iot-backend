@@ -46,7 +46,7 @@ const sendTelemetry = asyncHandler(async (req, res) => {
 
 const getDeviceTelemetry = asyncHandler(async (req, res) => {
   const { deviceId } = req.params;
-  const limit = parseInt(req.query.limit) || 20;
+  const limit = Math.min(parseInt(req.query.limit) || 20, 100);
   // deviceId is STRING, not ObjectId
   const device = await Device.findOne({ deviceId });
 

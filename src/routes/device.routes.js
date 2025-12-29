@@ -1,8 +1,10 @@
 import { Router } from "express";
-import { registerDevice, getUserDevices, getDeviceStatus } from "../controllers/device.controller.js";
+import { registerDevice, getUserDevices, getDeviceStatus, heartbeat} from "../controllers/device.controller.js";
 import { getDeviceTelemetry } from "../controllers/telemetry.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { verifyDevice } from "../middlewares/deviceAuth.middleware.js";
+import { deviceRateLimit } from "../middlewares/deviceRateLimit.js";
+
 
 const router = Router();
 router.get("/test", (req, res) => res.send("Router works!"));
@@ -14,7 +16,9 @@ router.post("/register", authMiddleware, registerDevice);
 router.get("/user/:userId/devices", authMiddleware, getUserDevices);
 //get status of all devices
 router.get("/device/:deviceId/status", authMiddleware, getDeviceStatus);
-// Telemetry history
+//Telemetry history
 router.get("/device/:deviceId/telemetry", authMiddleware, getDeviceTelemetry);
+//heartbeat of iot
+router.post("/heartbeat", verifyDevice, deviceRateLimit, heartbeat);
 
 export default router;
