@@ -11,14 +11,14 @@ router.get("/test", (req, res) => res.send("Router works!"));
 
 
 // 🔐 user must be logged in
-router.post("/register", authMiddleware, registerDevice);
+router.post("/devices/register", authMiddleware, registerDevice);
 //Fetch all devices belonging to a user.
 router.get("/devices/user/:userId/devices", authMiddleware, getUserDevices);
 //get status of all devices
-router.get("/device/:deviceId/status", authMiddleware, getDeviceStatus);
+router.get("/devices/:deviceId/status", authMiddleware, getDeviceStatus);
 //Telemetry history
-router.get("/device/:deviceId/telemetry", authMiddleware, getDeviceTelemetry);
+router.get("/devices/:deviceId/telemetry", authMiddleware, getDeviceTelemetry);
 //heartbeat of iot
-router.post("/heartbeat", verifyDevice, deviceRateLimit, heartbeat);
+router.post("devices/heartbeat", verifyDevice, deviceRateLimit, heartbeat);
 
 export default router;
