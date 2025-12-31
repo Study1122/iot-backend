@@ -19,5 +19,5 @@ router.get("/devices/:deviceId/status", authMiddleware, getDeviceStatus);
 //Telemetry history
 router.get("/devices/:deviceId/telemetry", authMiddleware, getDeviceTelemetry);
 //heartbeat of iot
-router.post("devices/heartbeat", verifyDevice, deviceRateLimit, heartbeat);
+router.post("/devices/heartbeat", verifyDevice, deviceRateLimit, heartbeat);
 export default router;

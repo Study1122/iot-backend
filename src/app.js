@@ -37,8 +37,8 @@ app.get("/", (req,res)=>{
   res.send("server is online!!!");
 })
 
-app.use("/api/v1/users", userRouter)
+app.use("/api/v1", userRouter)
 app.use("/api/v1", deviceRouter);
-app.use("/api/v1/telemetry", telemetryRouter);
+app.use("/api/v1", telemetryRouter);
 
 export {app}

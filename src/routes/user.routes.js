@@ -8,10 +8,10 @@ router.post("/", (req,res)=>{
   res.send("User root Post working");
 });
   
-router.post("/register", registerUser);
-router.post("/login", loginUser);
-router.get("/profile", authMiddleware, userProfile);
-router.post("/refresh_token", refreshAccessToken);
-router.post("/logout", logoutUser);
+router.post("/users/register", registerUser);
+router.post("/users/login", loginUser);
+router.get("/users/profile", authMiddleware, userProfile);
+router.post("/users/refresh_token", refreshAccessToken);
+router.post("/users/logout", logoutUser);
 
 export default router;

@@ -7,6 +7,6 @@ import { validateTelemetry } from "../middlewares/validateTelemetry.middleware.j
 const router = Router();
 
 // Only authenticated devices can send telemetry
-router.post("/send", verifyDevice, validateTelemetry, deviceRateLimit, sendTelemetry);
+router.post("/telemetry/send", verifyDevice, validateTelemetry, deviceRateLimit, sendTelemetry);
 
 export default router;

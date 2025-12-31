@@ -37,11 +37,10 @@ deviceSchema.methods.generateDeviceSecret = function () {
 };
 
 // 🔒 Hash secret before saving
-deviceSchema.pre("save", async function(next) {
-  if (!this.isModified("deviceSecret")) return next;
+deviceSchema.pre("save", async function() {
+  if (!this.isModified("deviceSecret")) return;
   const salt = await bcrypt.genSalt(10);
   this.deviceSecret = await bcrypt.hash(this.deviceSecret, salt);
-  next;
 });
 
 export const Device = mongoose.model("Device", deviceSchema);
