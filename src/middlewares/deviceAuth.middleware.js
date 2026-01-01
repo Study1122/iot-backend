@@ -5,9 +5,9 @@ import bcrypt from "bcryptjs";
 const verifyDevice = async (req, res, next) => {
   try {
     const deviceId = req.headers["x-device-id"];
-    const deviceSecret = req.headers["x-device-secret"];
+    const incomingDeviceSecret = req.headers["x-device-secret"];
 
-    if (!deviceId || !deviceSecret) {
+    if (!deviceId || !incomingDeviceSecret) {
       throw new ApiError(401, "Device ID and Secret are required");
     }
 
@@ -16,15 +16,15 @@ const verifyDevice = async (req, res, next) => {
       .select("+deviceSecret");
 
     if (!device) {
-      throw new ApiError(401, "Device not found");
+      throw new ApiError(401, "Invalid device credentials!!");
     }
-
-    // Compare secret
-    //if (device.deviceSecret !== deviceSecret) {
-    // throw new ApiError(401, "Invalid device credentials");
-    //}
+    //compare secret tokens
+    const isValid = await bcrypt.compare(
+      incomingDeviceSecret,
+      device.deviceSecret
+    );
     
-    if (!device || !(await bcrypt.compare(deviceSecret, device.deviceSecret))) {
+    if (!isValid) {
       throw new ApiError(401, "Invalid device credentials");
     }
 

@@ -19,6 +19,11 @@ const deviceSchema = new mongoose.Schema(
       required: true,
       select: false
     },
+    plainSecret: {
+      type: String,
+      required: true,
+      select: false
+    },
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

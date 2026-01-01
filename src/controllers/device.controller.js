@@ -12,19 +12,22 @@ const registerDevice = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Device name and deviceId are required");
   }
   // prevent duplicate device
-  const existingDevice = await Device.findOne({ deviceId });
+  const existingDevice = await Device.findOne({ deviceId })
     if (existingDevice) {
       throw new ApiError(409, "Device already registered");
   }
-  
+  // Create device instance
   const device = new Device({
     deviceName,
     deviceId,
     owner: req.user._id,
-  });
+  })
   
-  const deviceSecret = device.generateDeviceSecret()
-  device.deviceSecret = deviceSecret;
+  // Generate plain secre
+  const plainSecret = device.generateDeviceSecret()
+  device.plainSecret = plainSecret;
+  device.deviceSecret = plainSecret
+  // Save to DB
   await device.save();
   
   return res
@@ -32,6 +35,8 @@ const registerDevice = asyncHandler(async (req, res) => {
   .json(new ApiResponse(201,"Device registered successfully",{
       deviceId: device.deviceId,
       deviceName: device.deviceName,
+      deviceSecret: device.deviceSecret,
+      plainSecret: device.plainSecret,//<--this is what device will use for auth
     })
   );
 });
@@ -45,7 +50,10 @@ const getUserDevices = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid user ID");
   }
 
-  const devices = await Device.find({ owner: userId }).select("+deviceSecret");
+  const devices = await Device
+  .find({ owner: userId })
+  .select("+deviceSecret +plainSecret");
+
   const now = Date.now();
 
   const result = devices.map(device => ({
