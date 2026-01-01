@@ -53,11 +53,7 @@ const loginUser = asyncHandler(async (req, res)=>{
   if(!username|| !password){
     throw new ApiError(300, "All fields required!!")
   }
-  ////////////frontend check
-  console.log("HEADERS:", req.headers["content-type"]);
-  console.log("ORIGIN:", req.headers.origin);
-  console.log("BODY:", req.body);
-  ////////////
+  
   const user = await User.findOne({username}).select("+password +refreshToken")
   
   if(!user){
@@ -68,20 +64,9 @@ const loginUser = asyncHandler(async (req, res)=>{
   if(!isMatch){
     throw new ApiError(400, "Invalid  credentials!!!");
   }
+  //generate Access And RefreshTokens
   const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id)
-  /*
-  const accessToken = await jwt.sign(
-    {_id: user?._id},
-    process.env.ACCESS_TOKEN_SECRET,
-    {expiresIn: process.env.ACCESS_TOKEN_EXPIRY}
-  );
-  
-  const refreshToken = await jwt.sign(
-    {_id: user?._id},
-    process.env.REFRESH_TOKEN_SECRET,
-    {expiresIn: process.env.REFRESH_TOKEN_EXPIRY}
-  );
-  */
+
   user.refreshToken = refreshToken
   await user.save()
   

@@ -32,7 +32,6 @@ const registerDevice = asyncHandler(async (req, res) => {
   .json(new ApiResponse(201,"Device registered successfully",{
       deviceId: device.deviceId,
       deviceName: device.deviceName,
-      deviceSecret,
     })
   );
 });
@@ -47,7 +46,6 @@ const getUserDevices = asyncHandler(async (req, res) => {
   }
 
   const devices = await Device.find({ owner: userId }).select("+deviceSecret");
-  console.log(devices)
   const now = Date.now();
 
   const result = devices.map(device => ({
