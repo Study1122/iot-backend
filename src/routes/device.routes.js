@@ -24,8 +24,10 @@ router.delete("/devices/:deviceId",authMiddleware, deleteDevice);
 router.post("/devices/:deviceId/feature", authMiddleware,
   addDeviceFeature
 );
-//update device feature
-router.patch("/devices/:deviceId/feature", authMiddleware, updateDeviceFeature);
+//update metadata device feature
+router.patch("/devices/:deviceId/feature/meta", authMiddleware, updateDeviceFeature);
+//update toggle feature (button state & slider position)
+router.patch("/devices/:deviceId/feature/control", authMiddleware, updateDeviceFeature);
 //❌ remove device feature
 router.delete("/devices/:deviceId/feature/:featureId", authMiddleware, removeDeviceFeature);
 //Telemetry history

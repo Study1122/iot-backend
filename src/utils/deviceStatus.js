@@ -1,6 +1,5 @@
 
-//check for 2 min default
-export const isDeviceOnline = (device, thresholdMs = 2 * 60 * 1000) => {
+export const isDeviceOnline = (device, thresholdMs = 60_000) => {
   if (!device.lastSeen) return false;
-  return Date.now() - device.lastSeen.getTime() < thresholdMs;
+  return Date.now() - new Date(device.lastSeen).getTime() < thresholdMs;
 };

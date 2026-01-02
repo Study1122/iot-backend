@@ -33,8 +33,14 @@ const sendTelemetry = asyncHandler(async (req, res) => {
   });
 
   // Optional: update device lastSeen (move to deviceVerify middleware if preferred)
-  device.lastSeen = new Date();
-  await device.save({ validateBeforeSave: false });
+  await Device.updateOne({ _id: device._id },
+    {
+      $set: {
+        lastSeen: new Date(),
+        status: "online"
+      }
+    }
+  );
 
   // Respond
   res

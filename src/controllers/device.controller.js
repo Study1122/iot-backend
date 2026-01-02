@@ -80,8 +80,7 @@ const getUserDevices = asyncHandler(async (req, res) => {
 
   const result = devices.map(device => ({
     ...device.toObject(),
-    isOnline:
-      device.lastSeen && (now - device.lastSeen.getTime()) < 60 * 1000
+    status: isDeviceOnline(device) ? "online" : "offline"
   }));
 
   res.status(200).json(
@@ -97,23 +96,24 @@ const getDeviceStatus = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Device not found");
   }
   
-  const online = isDeviceOnline(device);
-  // optional: keep DB in sync
-  if (device.isOnline !== online) {
-    device.isOnline = online;
-    await device.save();
-  }
-  
   // 🔐 ownership check (VERY IMPORTANT)
   if (device.owner.toString() !== req.user._id.toString()) {
     throw new ApiError(403, "Unauthorized access to this device");
   }
   
-  const now = new Date();
-  const isOnline = device.lastSeen && (now - device.lastSeen) < 60 * 1000; // 1 min
-
+  const online = isDeviceOnline(device);
+  const newStatus = online ? "online" : "offline";
+  // optional: keep DB in sync
+  if (device.status !== newStatus) {
+    device.status = newStatus;
+    await device.save();
+  }
+  
   res.status(200).json(
-    new ApiResponse(200, "Device status fetched", { online: device.isOnline })
+    new ApiResponse(200, "Device status fetched", { 
+      status: device.status,
+      lastSeen: device.lastSeen
+    })
   );
 });
 //regenerate Device Secret
@@ -188,8 +188,6 @@ const addDeviceFeature = asyncHandler(async (req, res) => {
 const updateDeviceFeature = asyncHandler(async (req, res) => {
   const { deviceId } = req.params;
   const { featureId, type, isOn, level, name } = req.body;
-
-  console.log("Incoming Feature Id: ", featureId)
   
   const device = await Device.findOne({ deviceId });
   
@@ -283,7 +281,7 @@ const deleteDevice = asyncHandler(async (req, res) => {
   const device = req.device;
 
   device.lastSeen = new Date();
-  device.isOnline = true;
+  device.status = "online";
   await device.save({ validateBeforeSave: false });
 
   return res.status(200).json(
