@@ -8,6 +8,11 @@ const telemetrySchema = new Schema(
       required: true,
       index: true
     },
+    eventType: {
+      type: String,
+      enum: ["sensor", "control"],
+      required: true
+    },
 
     data: {
       temperature: {
@@ -24,6 +29,20 @@ const telemetrySchema = new Schema(
         type: Number,
         min: 0
       }
+    },
+    // 🔹 CONTROL EVENTS (updated)
+    control: {
+      featureId: { type: String },
+      type: { type: String, enum:["fan", "bulb", "switch"] },
+      name: { type: String },
+      isOn: { type: Boolean },
+      level: { type: Number }
+    },
+
+    source: {
+      type: String,
+      enum: ["device", "user"],
+      default: "device"
     }
   },
   { timestamps: true }
@@ -36,7 +55,7 @@ telemetrySchema.index(
 );
 
 // 🔥 Fast dashboard queries
-telemetrySchema.index({ device: 1, createdAt: -1 });
+telemetrySchema.index({ device: 1, eventType: 1, createdAt: -1 });
 
 
 export const Telemetry = mongoose.model("Telemetry", telemetrySchema);

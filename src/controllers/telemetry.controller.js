@@ -27,7 +27,9 @@ const sendTelemetry = asyncHandler(async (req, res) => {
   // Save telemetry
   const telemetry = await Telemetry.create({
     device: device._id,
-    data // save all sensors as-is
+    eventType: "sensor",
+    data, // save all sensors as-is
+    source: "device"
   });
 
   // Optional: update device lastSeen (move to deviceVerify middleware if preferred)
@@ -35,10 +37,9 @@ const sendTelemetry = asyncHandler(async (req, res) => {
   await device.save({ validateBeforeSave: false });
 
   // Respond
-  return res.status(201).json(
-    new ApiResponse(
-      201,
-      "Telemetry data saved successfully",
+  res
+  .status(201)
+  .json(new ApiResponse(201,"Telemetry data saved successfully",
       { id: telemetry._id }
     )
   );
@@ -46,6 +47,7 @@ const sendTelemetry = asyncHandler(async (req, res) => {
 
 const getDeviceTelemetry = asyncHandler(async (req, res) => {
   const { deviceId } = req.params;
+  //console.log(deviceId)
   const limit = Math.min(parseInt(req.query.limit) || 20, 100);
   // deviceId is STRING, not ObjectId
   const device = await Device.findOne({ deviceId });
@@ -60,11 +62,10 @@ const getDeviceTelemetry = asyncHandler(async (req, res) => {
   }
 
   const telemetry = await Telemetry.find({ device: device._id })
-    .sort({ createdAt: -1 })
-    .limit(limit);
+  .sort({ createdAt: -1 }).limit(limit);
 
   res.status(200).json(
-    new ApiResponse(200, "Telemetry fetched successfully", telemetry)
+    new ApiResponse(200, "Telemetry fetched successfully", (telemetry) )
   );
 });
 export {sendTelemetry, getDeviceTelemetry}

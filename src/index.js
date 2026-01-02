@@ -29,7 +29,7 @@ setInterval(async () => {
 connectDB().then(()=>{
   const PORT = process.env.PORT || 8000
   app.listen(PORT, "0.0.0.0", ()=>{
-    console.log(`Server is running at port ${process.env.PORT}`)
+    console.log(`Backend Server is running at port ${process.env.PORT}`)
   })
 }).catch((err) => {
     console.log("ERROR: MongoDB connection failed!!!", err);

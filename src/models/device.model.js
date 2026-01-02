@@ -19,19 +19,48 @@ const deviceSchema = new mongoose.Schema(
       required: true,
       select: false
     },
-    plainSecret: {
-      type: String,
-      required: true,
-      select: false
+    status: { 
+      type: String, 
+      default: "offline" 
+    },
+    lastSeen: {
+      type: Date,
     },
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
-    lastSeen: {
-      type: Date,
-    },
+    // 🔥 Scalable controls
+    features: [
+      {
+        _id: false,
+        
+        featureId: { 
+          type: String, 
+          required: true 
+          
+        }, // fan1, bulb2
+        
+        type: {
+          type: String,
+          enum: ["fan", "bulb", "switch"],
+          required: true
+        },
+        
+        name: String, // Bedroom Fan
+        
+        isOn: { type: Boolean, default: false },
+
+        // 🔥 regulator (fan speed)
+        level: {
+          type: Number,
+          min: 0,
+          max: 5,
+          default: 0
+        }
+      }
+    ]
   },
   { timestamps: true }
 );

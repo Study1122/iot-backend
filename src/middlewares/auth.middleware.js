@@ -25,16 +25,14 @@ const authMiddleware = asyncHandler(async (req, res, next) => {
   if (!decoded || !decoded._id) {
     throw new ApiError(401, "Invalid Token. Please login again!!!");
   }
-  //get user id from decoded token
-  const userId = decoded._id;
-
+  
   //check user exists
-  const existingUser = await User.findById(userId).select(
+  const existingUser = await User.findById(decoded._id).select(
     "-password -refreshTokens"
   );
   if (!existingUser) {
     //TODO: logout user from client side
-    throw new ApiError(404, "This user does not exist!!!");
+    throw new ApiError(401, "User no longer exists. Please login again.");
   }
 
   //attach user to req object
