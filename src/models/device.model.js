@@ -43,13 +43,18 @@ const deviceSchema = new mongoose.Schema(
           
         }, // fan1, bulb2
         
+        featureName:{  // Bedroom Fan /bulb / AC
+          type: String,
+          required: true
+        },
+        
         type: {
           type: String,
           enum: ["fan", "bulb", "switch"],
           required: true
         },
         
-        name: String, // Bedroom Fan
+        featureDevice: String, // Bedroom Fan
         
         isOn: { type: Boolean, default: false },
 

@@ -53,23 +53,39 @@ const sendTelemetry = asyncHandler(async (req, res) => {
 
 const getDeviceTelemetry = asyncHandler(async (req, res) => {
   const { deviceId } = req.params;
+  const userId = req.user._id;
   //console.log(deviceId)
+  
   const limit = Math.min(parseInt(req.query.limit) || 20, 100);
-  // deviceId is STRING, not ObjectId
-  const device = await Device.findOne({ deviceId });
+  
+  // 1️⃣ ownership check
+  const device = await Device.findOne({ 
+    deviceId,
+    owner: userId
+  });
 
   if (!device) {
     throw new ApiError(404, "Device not found");
   }
-
-  // ownership check
-  if (device.owner.toString() !== req.user._id.toString()) {
-    throw new ApiError(403, "Unauthorized");
-  }
-
+  
+  // 2️⃣ fetch telemetry
   const telemetry = await Telemetry.find({ device: device._id })
-  .sort({ createdAt: -1 }).limit(limit);
-
+  .sort({ createdAt: -1 })
+  .limit(limit);
+  
+  // 3️⃣ 🔥 update lastSeen + status if telemetry exists
+  if (telemetry.length > 0) {
+    await Device.updateOne(
+      { _id: device._id },
+      {
+        $set: {
+          lastSeen: telemetry[0].createdAt,
+          status: "online"
+        }
+      }
+    );
+  }
+  
   res.status(200).json(
     new ApiResponse(200, "Telemetry fetched successfully", (telemetry) )
   );
