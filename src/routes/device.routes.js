@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { registerDevice, getUserDevices, getDeviceStatus, getDeviceById, heartbeat, regenerateDeviceSecret, deleteDevice, addDeviceFeature, updateDeviceFeature, removeDeviceFeature} from "../controllers/device.controller.js";
+import { registerDevice, getUserDevices, getDeviceStatus, getDeviceById, heartbeat, regenerateDeviceSecret, deleteDevice, addDeviceFeature, updateDeviceFeature, removeDeviceFeature, getDeviceFeatures} from "../controllers/device.controller.js";
 import { getDeviceTelemetry } from "../controllers/telemetry.controller.js";
 import { authMiddleware } from "../middlewares/auth.middleware.js";
 import { verifyDevice } from "../middlewares/deviceAuth.middleware.js";
@@ -24,6 +24,8 @@ router.delete("/devices/:deviceId",authMiddleware, deleteDevice);
 router.post("/devices/:deviceId/feature", authMiddleware,
   addDeviceFeature
 );
+// GET all features for a device
+router.get("/devices/:deviceId/features", verifyDevice, getDeviceFeatures);
 //update metadata device feature
 router.patch("/devices/:deviceId/feature/meta", authMiddleware, updateDeviceFeature);
 //update toggle feature (button state & slider position)

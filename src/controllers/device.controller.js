@@ -227,6 +227,26 @@ const updateDeviceFeature = asyncHandler(async (req, res) => {
   .status(200)
   .json(new ApiResponse(200 ,"Feature updated", feature));
 });
+//GET FEATURE
+const getDeviceFeatures = async (req, res, next) => {
+  try {
+    const { deviceId } = req.params;
+
+    // Find device
+    const device = await Device.findOne({ deviceId }).select("features");
+    if (!device) {
+      return res.status(404).json({ message: "Device not found" });
+    }
+
+    // Return features
+    res.status(200).json({
+      deviceId: device.deviceId,
+      features: device.features || []
+    });
+  } catch (err) {
+    next(err);
+  }
+};
 // ❌ REMOVE FEATURE
 const removeDeviceFeature = asyncHandler(async (req, res) => {
   const { deviceId, featureId } = req.params;
@@ -298,5 +318,5 @@ const deleteDevice = asyncHandler(async (req, res) => {
   );
 });
 
-export {registerDevice, getUserDevices, getDeviceStatus, heartbeat, getDeviceById, deleteDevice, regenerateDeviceSecret, addDeviceFeature, updateDeviceFeature, removeDeviceFeature};
+export {registerDevice, getUserDevices, getDeviceStatus, heartbeat, getDeviceById, deleteDevice, regenerateDeviceSecret, addDeviceFeature, updateDeviceFeature, removeDeviceFeature, getDeviceFeatures};
 
